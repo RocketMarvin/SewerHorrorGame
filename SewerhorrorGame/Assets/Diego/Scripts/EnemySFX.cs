@@ -4,8 +4,8 @@ using UnityEngine;
 
 public class EnemySFX : MonoBehaviour
 {
-    public AudioClip[] breathingSounds;
-    public AudioSource bigRoar;
+    public AudioClip[] breathingSounds, smallBreathingSounds;
+    public AudioSource bigRoar, sniffing;
     public AudioSource selectedBreath;
 
     private int randomNum;
@@ -28,5 +28,16 @@ public class EnemySFX : MonoBehaviour
         selectedBreath.Play();
 	}
 
+    public void RandomBreathSoundSmall()
+	{
+        randomNum = Random.Range(0, breathingSounds.Length);
+        selectedBreath.clip = smallBreathingSounds[randomNum];
+        selectedBreath.Play();
+    }
+
     public void BigRoarSound() => bigRoar.Play();
+
+    public void SniffingStart() => sniffing.Play();
+    public void SniffingPause() => sniffing.Pause();
+    public void SniffingUnPause() => sniffing.UnPause();
 }

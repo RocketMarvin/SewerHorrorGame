@@ -31987,6 +31987,13 @@ AnimationClip:
   m_HasGenericRootTransform: 0
   m_HasMotionFloatCurves: 0
   m_Events:
+  - time: 0
+    functionName: ShortSniffing
+    data: 
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 0
+    intParameter: 0
+    messageOptions: 0
   - time: 0.76
     functionName: RandomBreathSound
     data: 
@@ -31994,7 +32001,7 @@ AnimationClip:
     floatParameter: 0
     intParameter: 0
     messageOptions: 0
-  - time: 3.08
+  - time: 3.16
     functionName: RandomBreathSound
     data: 
     objectReferenceParameter: {fileID: 0}
