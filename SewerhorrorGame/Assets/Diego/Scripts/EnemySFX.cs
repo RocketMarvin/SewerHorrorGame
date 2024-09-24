@@ -5,10 +5,11 @@ using UnityEngine;
 public class EnemySFX : MonoBehaviour
 {
     public AudioClip[] breathingSounds, smallBreathingSounds;
+    public AudioClip[] walkingSounds;
     public AudioSource bigRoar, sniffing;
-    public AudioSource selectedBreath;
+    public AudioSource selectedBreath, selectedWalk;
 
-    private int randomNum;
+    private int randomNum, randomNum_Walk;
     // Start is called before the first frame update
     void Start()
     {
@@ -18,8 +19,26 @@ public class EnemySFX : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+		if (!Enemy.isPlayingSound)
+		{
+            bigRoar.gameObject.SetActive(true);
+            sniffing.gameObject.SetActive(true);
+            selectedBreath.gameObject.SetActive(true);
+		}
+		else
+		{
+            bigRoar.gameObject.SetActive(false);
+            sniffing.gameObject.SetActive(false);
+            selectedBreath.gameObject.SetActive(false);
+		}
     }
+
+    public void WalkingSound()
+	{
+        randomNum_Walk = Random.Range(0, walkingSounds.Length);
+        selectedWalk.clip = walkingSounds[randomNum_Walk];
+        selectedWalk.Play();
+	}
 
     public void RandomBreathSound()
 	{
