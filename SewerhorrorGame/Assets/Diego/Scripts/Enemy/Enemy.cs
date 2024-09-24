@@ -19,9 +19,13 @@ public class Enemy : MonoBehaviour
 
     private bool pullRandomPath = true;
 
-    public AudioSource attackingSound;
+    public AudioSource chaseSound, attackSound;
 
     public static bool isAttacking = false, isPlayingSound = false;
+    public bool screamEvent = false, isPlayingEvent = false;
+    private bool eventDone = true, killedPlayer = false, killSpamCorrector = false;
+
+    public GameObject player_GameObject, scareCam;
 
     private void Start()
     {
@@ -30,13 +34,37 @@ public class Enemy : MonoBehaviour
         currentState = EnemyState.Passive;
         isAttacking = false;
         isPlayingSound = false;
+        isPlayingEvent = false;
+        eventDone = true; 
+        killedPlayer = false;
+        killSpamCorrector = false;
     }
 
     private void Update()
     {
-        EnemyBehaviour();
-        MovementLogic();
+		if (!killedPlayer)
+		{
+            EnemyBehaviour();
+            MovementLogic();
+        }
+        else KillBehaviour();
+
         if (hasHP) HPBehaviour();
+    }
+
+    private void KillBehaviour()
+	{
+		if (!killSpamCorrector)
+		{
+            attackSound.Play();
+            chaseSound.Stop();
+            player_GameObject.SetActive(false);
+            scareCam.SetActive(true);
+            agent.speed = 0;
+            agent.Stop();
+            enemyAnimator.SetTrigger("jumpScare");
+            killSpamCorrector = true;
+		}
     }
 
 
@@ -67,20 +95,43 @@ public class Enemy : MonoBehaviour
     {
         if (agent.hasPath == false)
         {
-            if (pullRandomPath)
-            {
-                currentState = EnemyState.Roaming;
-                pullRandomPath = false;
-            }
-            else
-            {
-                idleTimer_Script -= Time.deltaTime;
-                if (idleTimer_Script <= 0)
-                {
-                    pullRandomPath = true;
-                    idleTimer_Script = idleTimer;
-                    return;
+			if (!screamEvent)
+			{
+				if (!isPlayingEvent && !eventDone)
+				{
+                    enemyAnimator.SetBool("screamEvent", false);
+                    FindObjectOfType<FieldOfView>().enabled = true;
+                    eventDone = true;
+				}
+				else if(!isPlayingEvent && eventDone)
+				{
+                    if (pullRandomPath)
+                    {
+                        currentState = EnemyState.Roaming;
+                        pullRandomPath = false;
+                    }
+                    else
+                    {
+                        idleTimer_Script -= Time.deltaTime;
+                        if (idleTimer_Script <= 0)
+                        {
+                            pullRandomPath = true;
+                            idleTimer_Script = idleTimer;
+                            return;
+                        }
+                    }
                 }
+            }
+			else
+			{
+                if(!isPlayingEvent)
+				{
+                    eventDone = false;
+                    enemyAnimator.SetBool("screamEvent", true);
+                    FindObjectOfType<FieldOfView>().enabled = false;
+                    isPlayingEvent = true;
+                }
+                else screamEvent = false;
             }
         }
     }
@@ -120,16 +171,16 @@ public class Enemy : MonoBehaviour
 
         if (isAttacking)
         {
-            attackingSound.Play();
+            chaseSound.Play();
             isPlayingSound = true;
             isAttacking = false;
         }
 
-        if(!isPlayingSound) attackingSound.Stop();
+        if(!isPlayingSound) chaseSound.Stop();
 
         if (isRunning) movementSpeed = editor_RunSpeed;
         else if (!isRunning && agent.hasPath == true) movementSpeed = editor_WalkSpeed;
-        else if (!isRunning && agent.hasPath == false) agent.speed = 0;
+        else if (!isRunning && agent.hasPath == false || isPlayingEvent && !isRunning && agent.hasPath == false) agent.speed = 0;
     }
 
     private Vector3 RandomPosition()
@@ -149,4 +200,9 @@ public class Enemy : MonoBehaviour
         Roaming,
         Chase
     }
+
+	private void OnTriggerEnter(Collider other)
+	{
+		if (other.gameObject.CompareTag("Player")) killedPlayer = true;
+	}
 }
