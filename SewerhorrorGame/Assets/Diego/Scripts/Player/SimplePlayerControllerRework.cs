@@ -16,8 +16,6 @@ public class SimplePlayerControllerRework : MonoBehaviour
     public float lookXLimit = 60.0f;
     public float crouchSpeed = 0.66f;
     public float gravity = 1500f;
-    public static bool beginGameEvent = false;
-    private float eventTimer = 3;
     public float crouchSmooth_Speed = 0.5f;
 
     // Voeg een extra referentie toe voor de trigger collider
@@ -38,7 +36,7 @@ public class SimplePlayerControllerRework : MonoBehaviour
     [Space]
     [SerializeField] private bool isOutOfStamina = false, isCrouching = false;
     private bool canRun = false;
-    private bool StaminaRunningCheck = false, beginPull = false, playSound = false, smoothCrouch = false;
+    private bool StaminaRunningCheck = false, playSound = false, smoothCrouch = false;
     public bool inMenu = false;
     public AudioSource outOfBreath;
 
@@ -47,8 +45,6 @@ public class SimplePlayerControllerRework : MonoBehaviour
         staminaBar.color = Color.white;
         staminaBar2.color = Color.white;
         playSound = false;
-        beginPull = false;
-        eventTimer = 3;
         cameraAnimator.GetComponent<Animator>();
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
@@ -65,31 +61,13 @@ public class SimplePlayerControllerRework : MonoBehaviour
 
     void Update()
     {
-        if (!beginPull)
+        if (canMove)
         {
-            if (inMenu)
-            {
-                canMove = true;
-                beginGameEvent = false;
-            }
-            else beginGameEvent = true;
-            beginPull = true;
+            PlayerMovement();
+            if (runSpeed <= 2.08f) CrouchBehaviour();
         }
-
-        if (!beginGameEvent)
-        {
-            if (canMove)
-            {
-                PlayerMovement();
-                if (runSpeed <= 2.08f) CrouchBehaviour();
-            }
-            StaminaBehaviour();
-            CameraBehaviour();
-        }
-        else if (beginGameEvent && !inMenu)
-        {
-            BeginEvent();
-        }
+        StaminaBehaviour();
+        CameraBehaviour();
     }
 
     private void PlayerMovement()
@@ -257,8 +235,6 @@ public class SimplePlayerControllerRework : MonoBehaviour
         if (isCrouching)
         {
             smoothCrouch = false;
-            if (standingStil) cameraAnimator.SetInteger("CrouchInt", 1);
-            else cameraAnimator.SetInteger("CrouchInt", 2);
 
             if (runSpeed >= 2.08f) runSpeed -= Time.deltaTime * 4;
             else if (runSpeed < 2.08f) runSpeed -= Time.deltaTime * 2;
@@ -281,8 +257,6 @@ public class SimplePlayerControllerRework : MonoBehaviour
         }
         else if (!isCrouching && !smoothCrouch)
         {
-            cameraAnimator.SetInteger("CrouchInt", 0);
-
             // Verander de hoogte van de colliders geleidelijk
             characterController.height = Mathf.Lerp(characterController.height, 1.5f, Time.deltaTime * crouchSmooth_Speed);
             playerCollider.height = Mathf.Lerp(playerCollider.height, 1.5f, Time.deltaTime * crouchSmooth_Speed);
@@ -323,23 +297,5 @@ public class SimplePlayerControllerRework : MonoBehaviour
             transform.rotation *= Quaternion.Euler(0, Input.GetAxis("Mouse X") * lookSpeed, 0);
         }
         else cameraAnimator.enabled = false;
-    }
-
-    private void BeginEvent()
-    {
-        if (beginGameEvent)
-        {
-            canMove = false;
-            eventTimer -= Time.deltaTime;
-            cameraAnimator.SetBool("isCarEvent", true);
-        }
-
-        if (eventTimer <= 0)
-        {
-            eventTimer = 0;
-            cameraAnimator.SetBool("isCarEvent", false);
-            canMove = true;
-            beginGameEvent = false;
-        }
     }
 }
