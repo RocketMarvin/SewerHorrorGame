@@ -15,13 +15,13 @@ public class Enemy : MonoBehaviour
 
     [SerializeField] private EnemyState currentState;
     [SerializeField] private Transform player;
-    public bool isRunning, hasHP = false;
+    public bool hasHP = false;
 
     private bool pullRandomPath = true;
 
-    public AudioSource chaseSound, attackSound;
+    public AudioSource chaseSound, attackSound, chaseMusic;  // Voeg chaseMusic hier toe
 
-    public static bool isAttacking = false, isPlayingSound = false;
+    public static bool isAttacking = false, isPlayingSound = false, isRunning;
     public bool screamEvent = false, isPlayingEvent = false;
     private bool eventDone = true, killedPlayer = false, killSpamCorrector = false;
 
@@ -29,33 +29,37 @@ public class Enemy : MonoBehaviour
 
     private void Start()
     {
+        isRunning = false;
         idleTimer_Script = idleTimer;
         pullRandomPath = true;
         currentState = EnemyState.Passive;
         isAttacking = false;
         isPlayingSound = false;
         isPlayingEvent = false;
-        eventDone = true; 
+        eventDone = true;
         killedPlayer = false;
         killSpamCorrector = false;
     }
 
     private void Update()
     {
-		if (!killedPlayer)
-		{
+        if (!killedPlayer)
+        {
             EnemyBehaviour();
             MovementLogic();
         }
         else KillBehaviour();
 
         if (hasHP) HPBehaviour();
+
+        // Zorg ervoor dat chaseMusic wordt afgespeeld wanneer isRunning true is
+        HandleChaseMusic();
     }
 
     private void KillBehaviour()
-	{
-		if (!killSpamCorrector)
-		{
+    {
+        if (!killSpamCorrector)
+        {
             attackSound.Play();
             chaseSound.Stop();
             player_GameObject.SetActive(false);
@@ -64,13 +68,12 @@ public class Enemy : MonoBehaviour
             agent.Stop();
             enemyAnimator.SetTrigger("jumpScare");
             killSpamCorrector = true;
-		}
+        }
     }
-
 
     private void HPBehaviour()
     {
-        
+
     }
 
     private void EnemyBehaviour()
@@ -95,16 +98,16 @@ public class Enemy : MonoBehaviour
     {
         if (agent.hasPath == false)
         {
-			if (!screamEvent)
-			{
-				if (!isPlayingEvent && !eventDone)
-				{
+            if (!screamEvent)
+            {
+                if (!isPlayingEvent && !eventDone)
+                {
                     enemyAnimator.SetBool("screamEvent", false);
                     FindObjectOfType<FieldOfView>().enabled = true;
                     eventDone = true;
-				}
-				else if(!isPlayingEvent && eventDone)
-				{
+                }
+                else if (!isPlayingEvent && eventDone)
+                {
                     if (pullRandomPath)
                     {
                         currentState = EnemyState.Roaming;
@@ -122,10 +125,10 @@ public class Enemy : MonoBehaviour
                     }
                 }
             }
-			else
-			{
-                if(!isPlayingEvent)
-				{
+            else
+            {
+                if (!isPlayingEvent)
+                {
                     eventDone = false;
                     enemyAnimator.SetBool("screamEvent", true);
                     FindObjectOfType<FieldOfView>().enabled = false;
@@ -158,7 +161,7 @@ public class Enemy : MonoBehaviour
     private void MovementLogic()
     {
         agent.speed = movementSpeed;
-        if(enemyAnimator != null) enemyAnimator.SetFloat("velocity", agent.velocity.magnitude);
+        if (enemyAnimator != null) enemyAnimator.SetFloat("velocity", agent.velocity.magnitude);
 
         if (FieldOfView.canSeePlayer == true)
         {
@@ -167,7 +170,7 @@ public class Enemy : MonoBehaviour
             isRunning = true;
         }
 
-        if(FieldOfView.canSeePlayer == true && !isAttacking && !isPlayingSound) isAttacking = true;
+        if (FieldOfView.canSeePlayer == true && !isAttacking && !isPlayingSound) isAttacking = true;
 
         if (isAttacking)
         {
@@ -176,7 +179,7 @@ public class Enemy : MonoBehaviour
             isAttacking = false;
         }
 
-        if(!isPlayingSound) chaseSound.Stop();
+        if (!isPlayingSound) chaseSound.Stop();
 
         if (isRunning) movementSpeed = editor_RunSpeed;
         else if (!isRunning && agent.hasPath == true) movementSpeed = editor_WalkSpeed;
@@ -194,6 +197,26 @@ public class Enemy : MonoBehaviour
         return hit.position;
     }
 
+    private void HandleChaseMusic()
+    {
+        if (isRunning && !killedPlayer)
+        {
+            // Start chase music als het niet al aan het spelen is
+            if (!chaseMusic.isPlaying)
+            {
+                chaseMusic.Play();
+            }
+        }
+        else
+        {
+            // Stop de chase music als de vijand stopt met rennen
+            if (chaseMusic.isPlaying)
+            {
+                chaseMusic.Stop();
+            }
+        }
+    }
+
     private enum EnemyState
     {
         Passive,
@@ -201,8 +224,8 @@ public class Enemy : MonoBehaviour
         Chase
     }
 
-	private void OnTriggerEnter(Collider other)
-	{
-		if (other.gameObject.CompareTag("Player")) killedPlayer = true;
-	}
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.CompareTag("Player")) killedPlayer = true;
+    }
 }
